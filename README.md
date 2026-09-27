@@ -62,8 +62,13 @@ stored as the album ID, or when beets identifies a strong local metadata match.
 
 ## Development
 
+Create a virtual environment with [uv](https://docs.astral.sh/uv/) and install
+the project in editable mode:
+
 ```console
-python -m pip install -e ".[dev]"
+uv venv
+source .venv/bin/activate
+uv pip install -e ".[dev]"
 ruff check .
 ruff format --check .
 pytest
