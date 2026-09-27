@@ -16,7 +16,14 @@ Bandcamp changes them.
 
 ## Installation
 
-Install the plugin and its dependencies from PyPI:
+Install the plugin and its dependencies from PyPI into the same Python
+environment as beets. With `uv`:
+
+```console
+uv pip install beets-bandcamp-sync
+```
+
+Or with `pip`:
 
 ```console
 python -m pip install beets-bandcamp-sync
