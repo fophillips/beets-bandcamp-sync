@@ -284,7 +284,12 @@ class BandcampSyncPlugin(BeetsPlugin):
 
     @staticmethod
     def _import(lib: Library, path: str, release_url: str) -> None:
-        from beets.ui.commands import import_files
+        try:
+            from beets.ui.commands.import_ import import_files
+        except ModuleNotFoundError as exc:
+            if exc.name != "beets.ui.commands.import_":
+                raise
+            from beets.ui.commands import import_files
 
         previous = {
             "search_ids": config["import"]["search_ids"].get(list),

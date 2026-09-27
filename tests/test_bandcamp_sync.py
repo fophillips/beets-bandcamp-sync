@@ -4,7 +4,12 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from beets.ui import UserError, commands
+from beets.ui import UserError
+
+try:
+    from beets.ui.commands import import_ as import_commands
+except ImportError:
+    from beets.ui import commands as import_commands
 
 from beetsplug import bandcamp_sync
 from beetsplug.bandcamp_sync import (
@@ -124,7 +129,7 @@ def test_import_uses_beets_commands_module(monkeypatch, tmp_path):
     release_url = "https://artist.bandcamp.com/album/release"
 
     monkeypatch.setattr(
-        commands,
+        import_commands,
         "import_files",
         lambda lib, paths, query: calls.append((lib, paths, query)),
     )
