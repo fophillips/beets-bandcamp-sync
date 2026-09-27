@@ -4,6 +4,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from beets.autotag import AlbumInfo, TrackInfo
+from beets.library import Item
 from beets.ui import UserError
 
 try:
@@ -66,28 +68,35 @@ def test_safe_extract_rejects_invalid_zip(tmp_path):
         safe_extract(str(archive), str(tmp_path / "music"))
 
 
-def test_local_match_uses_current_distance_api(monkeypatch):
-    item = SimpleNamespace()
+def test_local_match_uses_installed_beets_api():
+    item = Item(
+        album="Release",
+        albumartist="Artist",
+        artist="Artist",
+        disc=1,
+        disctotal=1,
+        length=60,
+        title="Song",
+        track=1,
+    )
     candidate = SimpleNamespace(items=lambda: [item])
-    album = SimpleNamespace(data_source="Bandcamp", tracks=[])
-    pairs = {}
-    distance_args = []
-
-    monkeypatch.setattr(
-        bandcamp_sync,
-        "assign_items",
-        lambda items, tracks: (pairs, [], []),
+    track = TrackInfo(
+        artist="Artist",
+        index=1,
+        length=60,
+        medium=1,
+        medium_index=1,
+        title="Song",
+    )
+    album = AlbumInfo(
+        [track],
+        album="Release",
+        artist="Artist",
+        data_source="Bandcamp",
+        mediums=1,
     )
 
-    def fake_distance(items, album_info, mapping):
-        distance_args.append((items, album_info, mapping))
-        return SimpleNamespace(distance=0)
-
-    monkeypatch.setattr(bandcamp_sync, "distance", fake_distance)
-
     assert local_match(album, [candidate]) is candidate
-    assert len(distance_args) == 1
-    assert distance_args[0][1:] == (album, pairs)
 
 
 def test_sync_uses_metadata_plugin_dispatch(monkeypatch):

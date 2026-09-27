@@ -19,6 +19,7 @@ from beets.autotag.distance import distance
 from beets.autotag.match import assign_items
 from beets.plugins import BeetsPlugin
 from beets.ui import UserError
+from beets.util import get_most_common_tags
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -158,8 +159,12 @@ def local_match(album: AlbumInfo, albums: Iterable[Album]) -> Album | None:
             cloned.data_source = album.data_source
             cloned.media = ""
             transient.append(cloned)
-        pairs, _, extra_tracks = assign_items(transient, album.tracks)
-        result = distance(transient, album, pairs)
+        pairs, extra_items, extra_tracks = assign_items(transient, album.tracks)
+        original = get_most_common_tags(transient)
+        if isinstance(original, tuple):
+            result = distance(transient, album, pairs)
+        else:
+            result = distance(original, album, pairs, len(extra_items))
         strong_threshold = config["match"]["strong_rec_thresh"].as_number()
         if not extra_tracks and result.distance <= strong_threshold:
             return candidate
