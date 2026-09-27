@@ -14,6 +14,7 @@ except ImportError:
 from beetsplug import bandcamp_sync
 from beetsplug.bandcamp_sync import (
     BandcampSyncPlugin,
+    bandcamp_album_for_id,
     local_match,
     pagedata,
     safe_extract,
@@ -104,8 +105,8 @@ def test_sync_uses_metadata_plugin_dispatch(monkeypatch):
         lambda username, cookies: [{"release_url": release_url}],
     )
 
-    def fake_album_for_id(url):
-        requested.append(url)
+    def fake_album_for_id(*args):
+        requested.append(args)
         return album
 
     monkeypatch.setattr(
@@ -120,7 +121,49 @@ def test_sync_uses_metadata_plugin_dispatch(monkeypatch):
         [],
     )
 
-    assert requested == [release_url]
+    expected = (
+        (release_url, bandcamp_sync.BANDCAMP_DATA_SOURCE)
+        if hasattr(bandcamp_sync.metadata_plugins, "get_metadata_source")
+        else (release_url,)
+    )
+    assert requested == [expected]
+
+
+def test_album_lookup_uses_current_beets_api(monkeypatch):
+    calls = []
+    album = object()
+    monkeypatch.setattr(
+        bandcamp_sync.metadata_plugins,
+        "get_metadata_source",
+        object(),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        bandcamp_sync.metadata_plugins,
+        "album_for_id",
+        lambda *args: calls.append(args) or album,
+    )
+
+    assert bandcamp_album_for_id("release-url") is album
+    assert calls == [("release-url", "Bandcamp")]
+
+
+def test_album_lookup_uses_legacy_beets_api(monkeypatch):
+    calls = []
+    album = object()
+    monkeypatch.delattr(
+        bandcamp_sync.metadata_plugins,
+        "get_metadata_source",
+        raising=False,
+    )
+    monkeypatch.setattr(
+        bandcamp_sync.metadata_plugins,
+        "album_for_id",
+        lambda *args: calls.append(args) or album,
+    )
+
+    assert bandcamp_album_for_id("release-url") is album
+    assert calls == [("release-url",)]
 
 
 def test_import_uses_beets_commands_module(monkeypatch, tmp_path):

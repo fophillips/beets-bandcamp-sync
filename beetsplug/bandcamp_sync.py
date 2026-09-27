@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 COLLECTION_URL = "https://bandcamp.com/api/fancollection/1/collection_items"
 HTTP_TIMEOUT = (10, 60)
 DOWNLOAD_CHUNK_SIZE = 1024 * 1024
+BANDCAMP_DATA_SOURCE = "Bandcamp"
 
 
 def load_cookies(path: str) -> http.cookiejar.MozillaCookieJar:
@@ -165,6 +166,12 @@ def local_match(album: AlbumInfo, albums: Iterable[Album]) -> Album | None:
     return None
 
 
+def bandcamp_album_for_id(url: str) -> AlbumInfo | None:
+    if hasattr(metadata_plugins, "get_metadata_source"):
+        return metadata_plugins.album_for_id(url, BANDCAMP_DATA_SOURCE)
+    return metadata_plugins.album_for_id(url)
+
+
 def safe_extract(
     path: str | os.PathLike[str], destination: str | os.PathLike[str]
 ) -> None:
@@ -207,7 +214,7 @@ class BandcampSyncPlugin(BeetsPlugin):
         albums = list(lib.albums())
         for release in releases:
             url = release["release_url"]
-            album = metadata_plugins.album_for_id(url)
+            album = bandcamp_album_for_id(url)
             if album is None:
                 self._log.warning("could not read Bandcamp release {}", url)
                 continue
