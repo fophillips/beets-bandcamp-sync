@@ -209,7 +209,6 @@ class BandcampSyncPlugin(BeetsPlugin):
         return [command]
 
     def sync(self, lib: Library, opts: Any, args: list[str]) -> None:
-        del args
         username = self.config["username"].as_str()
         cookie_path = self.config["cookies"].as_str()
         if not username or not cookie_path:
@@ -217,6 +216,7 @@ class BandcampSyncPlugin(BeetsPlugin):
         cookies = load_cookies(cookie_path)
         releases = collection_items(username, cookies)
         albums = list(lib.albums())
+        query = " ".join(args).casefold()
         for release in releases:
             url = release["release_url"]
             album = bandcamp_album_for_id(url)
@@ -224,6 +224,8 @@ class BandcampSyncPlugin(BeetsPlugin):
                 self._log.warning("could not read Bandcamp release {}", url)
                 continue
             description = f"{album.artist} - {album.album}"
+            if query and query not in description.casefold():
+                continue
             if any(
                 item.mb_albumid == url
                 for existing in albums

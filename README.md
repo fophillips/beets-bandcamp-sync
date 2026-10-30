@@ -64,6 +64,13 @@ Download and import missing albums:
 beet bandcamp-sync
 ```
 
+Optionally, provide a case-insensitive text filter to sync only releases whose
+artist or album title contains it:
+
+```console
+beet bandcamp-sync bass
+```
+
 The plugin considers an album present when its Bandcamp release URL is already
 stored as the album ID, or when beets identifies a strong local metadata match.
 

@@ -138,6 +138,42 @@ def test_sync_uses_metadata_plugin_dispatch(monkeypatch):
     assert requested == [expected]
 
 
+def test_sync_filters_releases_by_artist_or_album(monkeypatch):
+    plugin = BandcampSyncPlugin()
+    plugin.config["username"].set("listener")
+    plugin.config["cookies"].set("cookies.txt")
+    releases = [
+        {"release_url": "https://artist.bandcamp.com/album/bass-release"},
+        {"release_url": "https://other.bandcamp.com/album/release"},
+        {"release_url": "https://artist.bandcamp.com/album/other-release"},
+    ]
+    metadata = {
+        releases[0]["release_url"]: SimpleNamespace(
+            artist="Artist", album="Bass Release"
+        ),
+        releases[1]["release_url"]: SimpleNamespace(
+            artist="Bass Artist", album="Release"
+        ),
+        releases[2]["release_url"]: SimpleNamespace(artist="Artist", album="Release"),
+    }
+    downloaded = []
+
+    monkeypatch.setattr(bandcamp_sync, "load_cookies", lambda path: object())
+    monkeypatch.setattr(
+        bandcamp_sync, "collection_items", lambda username, cookies: releases
+    )
+    monkeypatch.setattr(bandcamp_sync, "bandcamp_album_for_id", metadata.__getitem__)
+    monkeypatch.setattr(
+        plugin,
+        "download_and_import",
+        lambda lib, cookies, release, url: downloaded.append(url),
+    )
+
+    plugin.sync(SimpleNamespace(albums=list), SimpleNamespace(pretend=False), ["BASS"])
+
+    assert downloaded == [release["release_url"] for release in releases[:2]]
+
+
 def test_album_lookup_uses_current_beets_api(monkeypatch):
     calls = []
     album = object()
